@@ -7,20 +7,20 @@ import pandas as pd
 def replace_str_index(text, index=0, replacement=''):
     return '%s%s%s' % (text[:index], replacement, text[index+1:])
 
-# Read crime scores of streets
+# Read crime scores of streets (will update every week via automation)
 score_table = pd.read_excel('crime_son.xlsx')
 
 # Insert API key
-gmaps = googlemaps.Client(key='')
+gmaps = googlemaps.Client(key='AIzaSyA18jMzuWuFQskJh39ivf6O_VPXcc-CzzI')
 
 # Request directions via driving mode and alternative routes
 now = datetime.now()
 directions_result = gmaps.directions("W Randolph St, Chicago, IL 60607, USA",
-                                     "1720-1798 Ashland Ave, Chicago, IL 60608, USA",
+                                     "4499-4401 W Washington Blvd, Chicago, IL 60624, USA",
                                      mode="driving",
                                      departure_time=now,
                                      alternatives=True)
-
+print('Getting the route alternatives...')
 count = 0
 z_value_list = []
 # Iterate through each alternative route

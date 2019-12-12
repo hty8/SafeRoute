@@ -50,7 +50,7 @@ df.to_excel('crime.xlsx')
 
 grouped = df.groupby(['Block'])['Score'].sum()
 
-grouped.to_excel('crime_scores.xlsx')
+grouped.to_excel('crime_son.xlsx')
 
 x_array = np.array(grouped['Score'])
 normalized_X = preprocessing.normalize([x_array])
