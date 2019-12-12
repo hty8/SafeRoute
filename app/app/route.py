@@ -11,7 +11,7 @@ def replace_str_index(text, index=0, replacement=''):
 score_table = pd.read_excel('crime_son.xlsx')
 
 # Insert API key
-gmaps = googlemaps.Client(key='AIzaSyA18jMzuWuFQskJh39ivf6O_VPXcc-CzzI')
+gmaps = googlemaps.Client(key='')
 
 # Request directions via driving mode and alternative routes
 now = datetime.now()
