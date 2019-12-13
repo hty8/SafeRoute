@@ -18,7 +18,8 @@ now = datetime.now()
 directions_result = gmaps.directions("W Randolph St, Chicago, IL 60607, USA",
                                      "4499-4401 W Washington Blvd, Chicago, IL 60624, USA",
                                      mode="driving",
-                                     departure_time=now)
+                                     departure_time=now,
+                                     alternatives=True)
 print('Getting the route alternatives...')
 count = 0
 z_value_list = []
@@ -81,13 +82,15 @@ for result in directions_result:
 
         route_threat_score = total_threat_score / len(address_list)
 
+    count += 1
+
     print(map_data)
 
     df = pd.DataFrame(map_data, columns=['point', 'weight'])
     df['weight'] = df.weight.astype(str)
     df['point'] = df.point.astype(str)
-    df['point'] = "{location: new google.maps.LatLng(" + df['point']
+    df['point'] = '{location: new google.maps.LatLng' + df['point']
 
-    df['weight'] = "), weight: " + df['weight'] + "},"
+    df['weight'] = ', weight: ' + df['weight'] + '},'
     print(df.head())
-    df.to_csv('map_data_1.csv', index=False)
+    df.to_csv('map_data_'+str(count)+'.csv', index=False)
