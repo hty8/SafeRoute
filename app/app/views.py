@@ -8,3 +8,10 @@ def home(request):
 
 def about(request):
     return render(request, template_name="about.html")
+
+
+def map(request):
+    return render(request, template_name="map.html")
+
+def heatmap(request):
+    return render(request, template_name="heatmap.html")

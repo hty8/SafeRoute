@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Map</title>
+  <style>
+    #map{
+      height:400px;
+      width:100%;
+    }
+  </style>
+</head>
+<body>
+    <h1>My Google Map</h1>
+    <div id="map"></div>
+        <button id="getDirection">Get directions</button>
+  <script>
+    function initMap(){
+
+        var directionsDisplay = new google.maps.DirectionsRenderer({
+            polylineOptions: {
+              strokeColor: "red"
+            }
+          });
+        var directionsService = new google.maps.DirectionsService();
+
+        var map;
+
+        var origin = new google.maps.LatLng(41.872070, -87.624302);
+        var destination = new google.maps.LatLng(41.960435, -87.727930);
+
+        // Map options
+        var options = {
+            zoom: 13,
+            center: origin
+        };
+
+        // New map
+        map = new google.maps.Map(document.getElementById('map'), options);
+
+        directionsDisplay.setMap(map);
+
+        function calculateRoute(){
+
+            var request = {
+                origin: origin,
+                destination: destination,
+                travelMode: 'DRIVING',
+                provideRouteAlternatives: true
+            };
+
+            directionsService.route(request, function(result, status) {
+                if(status == "OK"){
+                    directionsDisplay.setDirections(result);
+                }
+            });
+        }
+
+        document.getElementById('getDirection').onclick = function () {
+            calculateRoute();
+        }
+    }
+  </script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA18jMzuWuFQskJh39ivf6O_VPXcc-CzzI&callback=initMap">
+  </script>
+</body>
+</html>
