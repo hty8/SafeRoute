@@ -1,68 +1,381 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Map</title>
-  <style>
-    #map{
-      height:400px;
-      width:100%;
-    }
-  </style>
-</head>
-<body>
-    <h1>My Google Map</h1>
-    <div id="map"></div>
-        <button id="getDirection">Get directions</button>
-  <script>
-    function initMap(){
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Find Safest Route</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,700" rel="stylesheet">
+  <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic' rel='stylesheet' type='text/css'>
+  <!-- Theme CSS - Includes Bootstrap -->
+  <link rel="stylesheet" type="text/css" href="../static/app/creative.min.css">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 92%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #floating-panel {
+        position: absolute;
+        top: 10px;
+        left: 25%;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+      #floating-panel {
+        background-color: #fff;
+        border: 1px solid #999;
+        left: 25%;
+        padding: 5px;
+        position: absolute;
+        top: 10px;
+        z-index: 5;
+      }
+      #right-panel {
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
 
-        var directionsDisplay = new google.maps.DirectionsRenderer({
-            polylineOptions: {
-              strokeColor: "red"
-            }
-          });
+      #right-panel select, #right-panel input {
+        font-size: 15px;
+      }
+
+      #right-panel select {
+        width: 92%;
+      }
+
+      #right-panel i {
+        font-size: 12px;
+      }
+      #right-panel {
+        height: 92%;
+        float: right;
+        width: 390px;
+        overflow: auto;
+      }
+      #map {
+        margin-right: 400px;
+      }
+      .nav-link {
+        color: #f4623a;
+      }
+      @media print {
+        #map {
+          height: 500px;
+          margin: 0;
+        }
+        #right-panel {
+          float: none;
+          width: auto;
+        }
+      }
+    </style>
+  </head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top py-3" style="background-color: #f4623a; position: relative; height: 8%" id="mainNav">
+    <div class="container">
+      <a class="navbar-brand js-scroll-trigger"  href="/">SafeRoute</a>
+      <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav ml-auto my-2 my-lg-0">
+          <li class="nav-item">
+            <a class="nav-link js-scroll-trigger" href="/heatmap">Heatmap</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+    <div id="floating-panel">
+      <button class="btn btn-outline-secondary" id="changeGradient">Change gradient</button>
+      <button class="btn btn-outline-secondary" id="changeRadius">Change radius</button>
+      <button class="btn btn-outline-secondary" id="changeOpacity">Change opacity</button>
+      <button class="btn btn-outline-secondary" id="toggleHeatmap">Toggle Heatmap</button>
+    </div>
+    <div id="right-panel">
+      <div>
+        <b>Start:</b>
+          <select class="custom-select" id="start">
+            <option value="Bank of America, 2 S Michigan Ave">Bank of America, 2 S Michigan Ave</option>
+            <option value="Bank of America, 1167 N State St">Bank of America, 1167 N State St</option>
+            <option value="Bank of America, 3350 W Diversey Ave">Bank of America, 3350 W Diversey Ave</option>
+            <option value="Bank of America, 6331 S Archer Ave">Bank of America, 6331 S Archer Ave</option>
+            <option value="Bank of America, 5983 N Lincoln Ave">Bank of America, 5983 N Lincoln Ave</option>
+          </select>
+          <br>
+          <b>End:</b>
+          <select class="custom-select" id="end">
+            <option value="Bank of America, 2 S Michigan Ave">Bank of America, 2 S Michigan Ave</option>
+            <option value="Bank of America, 1167 N State St">Bank of America, 1167 N State St</option>
+            <option value="Bank of America, 3350 W Diversey Ave">Bank of America, 3350 W Diversey Ave</option>
+            <option value="Bank of America, 6331 S Archer Ave">Bank of America, 6331 S Archer Ave</option>
+            <option value="Bank of America, 5983 N Lincoln Ave">Bank of America, 5983 N Lincoln Ave</option>
+          </select>
+          <br><br>
+          <input class="btn btn-primary btn-lg" type="submit" id="submit" value="Find routes">
+      </div>
+    </div>
+    <div id="map"></div>
+
+    <script>
+
+      // This example requires the Visualization library. Include the libraries=visualization
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=visualization">
+
+
+      function initMap() {
+
+        var map, heatmap;
+        var directionsDisplay = new google.maps.DirectionsRenderer();
         var directionsService = new google.maps.DirectionsService();
 
-        var map;
+        var origin = new google.maps.LatLng(41.884463, -87.648588);
+        var destination = new google.maps.LatLng(41.881894, -87.737932);
 
-        var origin = new google.maps.LatLng(41.872070, -87.624302);
-        var destination = new google.maps.LatLng(41.960435, -87.727930);
-
-        // Map options
-        var options = {
-            zoom: 13,
-            center: origin
-        };
-
-        // New map
-        map = new google.maps.Map(document.getElementById('map'), options);
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 12,
+          center: {lat: 41.872070, lng: -87.624302}
+        });
 
         directionsDisplay.setMap(map);
+        directionsDisplay.setPanel(document.getElementById('right-panel'));
+        document.getElementById('submit').addEventListener('click', function() {
+          calculateRoute(directionsService, directionsDisplay);
+        });
+
+        var control = document.getElementById('floating-panel');
+
+        control.style.display = 'block';
+        map.controls[google.maps.ControlPosition.TOP_CENTER].push(control);
+
 
         function calculateRoute(){
 
             var request = {
-                origin: origin,
-                destination: destination,
-                travelMode: 'DRIVING',
+                origin: document.getElementById('start').value,
+                destination: document.getElementById('end').value,
+                travelMode: google.maps.DirectionsTravelMode.DRIVING,
+                unitSystem: google.maps.UnitSystem.METRIC,
                 provideRouteAlternatives: true
             };
 
             directionsService.route(request, function(result, status) {
-                if(status == "OK"){
+                if(status == google.maps.DirectionsStatus.OK){
                     directionsDisplay.setDirections(result);
                 }
             });
+
+            heatmap = new google.maps.visualization.HeatmapLayer({
+            data: getPoints(),
+            map: map,
+            radius: 18
+        });
         }
 
-        document.getElementById('getDirection').onclick = function () {
-            calculateRoute();
+
+/*      function calculateRoute(){
+
+          var request = {
+              origin: origin,
+              destination: destination,
+              travelMode: google.maps.DirectionsTravelMode.DRIVING,
+              provideRouteAlternatives: true
+          };
+
+
+          directionsService.route(request, function(result, status) {
+              if(status == google.maps.DirectionsStatus.OK){
+                var colors = ["red", "blue", "green"];
+                for (var i = 0; i < result.routes.length; i++) {
+                new google.maps.DirectionsRenderer({
+                    map: map,
+                    directions: result,
+                    routeIndex: i,
+                    polylineOptions: {strokeColor: colors[i]}
+                    });
+                }
+              }
+          });
+      }*/
+
+      function toggleHeatmap() {
+        heatmap.setMap(heatmap.getMap() ? null : map);
+      }
+      function changeGradient() {
+        var gradient = [
+          'rgba(0, 255, 255, 0)',
+          'rgba(0, 255, 255, 1)',
+          'rgba(0, 191, 255, 1)',
+          'rgba(0, 127, 255, 1)',
+          'rgba(0, 63, 255, 1)',
+          'rgba(0, 0, 255, 1)',
+          'rgba(0, 0, 223, 1)',
+          'rgba(0, 0, 191, 1)',
+          'rgba(0, 0, 159, 1)',
+          'rgba(0, 0, 127, 1)',
+          'rgba(63, 0, 91, 1)',
+          'rgba(127, 0, 63, 1)',
+          'rgba(191, 0, 31, 1)',
+          'rgba(255, 0, 0, 1)'
+        ]
+        heatmap.set('gradient', heatmap.get('gradient') ? null : gradient);
+      }
+
+      function changeRadius() {
+        heatmap.set('radius', heatmap.get('radius') === 40 ? 18 : 40);
+      }
+
+      function changeOpacity() {
+        heatmap.set('opacity', heatmap.get('opacity') ? null : 0.4);
+      }
+
+        document.getElementById('toggleHeatmap').onclick = function () {
+            toggleHeatmap();
         }
-    }
-  </script>
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
-  </script>
-</body>
+        document.getElementById('changeGradient').onclick = function () {
+            changeGradient();
+        }
+        document.getElementById('changeRadius').onclick = function () {
+            changeRadius();
+        }
+        document.getElementById('changeOpacity').onclick = function () {
+            changeOpacity();
+        }
+      }
+
+      function getPoints() {
+        return [
+
+{location: new google.maps.LatLng(41.88448, -87.6486), weight: 435},
+{location: new google.maps.LatLng(41.88565, -87.64864), weight: 152},
+{location: new google.maps.LatLng(41.88568, -87.6464), weight: 0},
+{location: new google.maps.LatLng(41.88568, -87.64622), weight: 0},
+{location: new google.maps.LatLng(41.88568, -87.64617), weight: 0},
+{location: new google.maps.LatLng(41.88569, -87.64609), weight: 0},
+{location: new google.maps.LatLng(41.8855, -87.64605), weight: 206},
+{location: new google.maps.LatLng(41.88531, -87.64601), weight: 0},
+{location: new google.maps.LatLng(41.88507, -87.64595), weight: 0},
+{location: new google.maps.LatLng(41.88448, -87.64592), weight: 181},
+{location: new google.maps.LatLng(41.88431, -87.64593), weight: 181},
+{location: new google.maps.LatLng(41.88412, -87.64607), weight: 181},
+{location: new google.maps.LatLng(41.88329, -87.64606), weight: 85},
+{location: new google.maps.LatLng(41.88283, -87.64604), weight: 85},
+{location: new google.maps.LatLng(41.88243, -87.64599), weight: 121},
+{location: new google.maps.LatLng(41.88189, -87.64597), weight: 121},
+{location: new google.maps.LatLng(41.88166, -87.64596), weight: 121},
+{location: new google.maps.LatLng(41.8805, -87.64591), weight: 357},
+{location: new google.maps.LatLng(41.88004, -87.6459), weight: 357},
+{location: new google.maps.LatLng(41.8791, -87.64591), weight: 175},
+{location: new google.maps.LatLng(41.87903, -87.64594), weight: 175},
+{location: new google.maps.LatLng(41.87839, -87.64603), weight: 264},
+{location: new google.maps.LatLng(41.87817, -87.64605), weight: 264},
+{location: new google.maps.LatLng(41.87763, -87.64602), weight: 264},
+{location: new google.maps.LatLng(41.87719, -87.64611), weight: 0},
+{location: new google.maps.LatLng(41.87695, -87.64621), weight: 32},
+{location: new google.maps.LatLng(41.87682, -87.64631), weight: 32},
+{location: new google.maps.LatLng(41.8766, -87.64649), weight: 32},
+{location: new google.maps.LatLng(41.87636, -87.64678), weight: 95},
+{location: new google.maps.LatLng(41.8762, -87.64702), weight: 95},
+{location: new google.maps.LatLng(41.87601, -87.64739), weight: 264},
+{location: new google.maps.LatLng(41.87591, -87.64772), weight: 264},
+{location: new google.maps.LatLng(41.87576, -87.64872), weight: 49},
+{location: new google.maps.LatLng(41.87568, -87.65036), weight: 26},
+{location: new google.maps.LatLng(41.87567, -87.65168), weight: 123},
+{location: new google.maps.LatLng(41.87572, -87.65326), weight: 0},
+{location: new google.maps.LatLng(41.87577, -87.65409), weight: 0},
+{location: new google.maps.LatLng(41.8758, -87.65446), weight: 0},
+{location: new google.maps.LatLng(41.87589, -87.65514), weight: 210},
+{location: new google.maps.LatLng(41.87608, -87.65636), weight: 0},
+{location: new google.maps.LatLng(41.87611, -87.65656), weight: 0},
+{location: new google.maps.LatLng(41.87617, -87.65704), weight: 185},
+{location: new google.maps.LatLng(41.87619, -87.65779), weight: 128},
+{location: new google.maps.LatLng(41.87615, -87.66011), weight: 185},
+{location: new google.maps.LatLng(41.8761, -87.66319), weight: 23},
+{location: new google.maps.LatLng(41.87608, -87.66483), weight: 51},
+{location: new google.maps.LatLng(41.87601, -87.66878), weight: 23},
+{location: new google.maps.LatLng(41.87596, -87.67031), weight: 23},
+{location: new google.maps.LatLng(41.87592, -87.67132), weight: 0},
+{location: new google.maps.LatLng(41.87585, -87.67651), weight: 25},
+{location: new google.maps.LatLng(41.87583, -87.67953), weight: 8},
+{location: new google.maps.LatLng(41.8758, -87.68252), weight: 0},
+{location: new google.maps.LatLng(41.87579, -87.68615), weight: 374},
+{location: new google.maps.LatLng(41.87575, -87.68869), weight: 140},
+{location: new google.maps.LatLng(41.87573, -87.69174), weight: 15},
+{location: new google.maps.LatLng(41.8757, -87.69377), weight: 17},
+{location: new google.maps.LatLng(41.87569, -87.69441), weight: 27},
+{location: new google.maps.LatLng(41.87566, -87.69574), weight: 27},
+{location: new google.maps.LatLng(41.87565, -87.69669), weight: 62},
+{location: new google.maps.LatLng(41.87561, -87.69845), weight: 62},
+{location: new google.maps.LatLng(41.87552, -87.69959), weight: 36},
+{location: new google.maps.LatLng(41.8754, -87.70058), weight: 17},
+{location: new google.maps.LatLng(41.87507, -87.70284), weight: 0},
+{location: new google.maps.LatLng(41.87448, -87.70693), weight: 82},
+{location: new google.maps.LatLng(41.87444, -87.70709), weight: 82},
+{location: new google.maps.LatLng(41.87439, -87.70751), weight: 82},
+{location: new google.maps.LatLng(41.87432, -87.70822), weight: 82},
+{location: new google.maps.LatLng(41.87427, -87.70919), weight: 44},
+{location: new google.maps.LatLng(41.87425, -87.71081), weight: 480},
+{location: new google.maps.LatLng(41.87422, -87.71345), weight: 202},
+{location: new google.maps.LatLng(41.87421, -87.7157), weight: 18},
+{location: new google.maps.LatLng(41.87419, -87.71671), weight: 18},
+{location: new google.maps.LatLng(41.87416, -87.71884), weight: 84},
+{location: new google.maps.LatLng(41.87405, -87.72789), weight: 88},
+{location: new google.maps.LatLng(41.87403, -87.72983), weight: 88},
+{location: new google.maps.LatLng(41.874, -87.73096), weight: 41},
+{location: new google.maps.LatLng(41.87408, -87.73111), weight: 41},
+{location: new google.maps.LatLng(41.87411, -87.73176), weight: 41},
+{location: new google.maps.LatLng(41.87411, -87.73279), weight: 59},
+{location: new google.maps.LatLng(41.87413, -87.73396), weight: 59},
+{location: new google.maps.LatLng(41.87417, -87.73427), weight: 59},
+{location: new google.maps.LatLng(41.8742, -87.73457), weight: 59},
+{location: new google.maps.LatLng(41.87424, -87.73474), weight: 59},
+{location: new google.maps.LatLng(41.87423, -87.73524), weight: 215},
+{location: new google.maps.LatLng(41.87441, -87.73524), weight: 59},
+{location: new google.maps.LatLng(41.87514, -87.73527), weight: 334},
+{location: new google.maps.LatLng(41.87696, -87.73533), weight: 0},
+{location: new google.maps.LatLng(41.87877, -87.73539), weight: 147},
+{location: new google.maps.LatLng(41.88008, -87.73545), weight: 96},
+{location: new google.maps.LatLng(41.88062, -87.73546), weight: 313},
+{location: new google.maps.LatLng(41.88059, -87.73743), weight: 313},
+{location: new google.maps.LatLng(41.88058, -87.73792), weight: 186},
+{location: new google.maps.LatLng(41.88125, -87.73794), weight: 446},
+{location: new google.maps.LatLng(41.88189, -87.73796), weight: 424},
+{location: new google.maps.LatLng(41.88189, -87.73793), weight: 424}
+
+        ];
+      }
+    </script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap&libraries=visualization">
+    </script>
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="../static/app/vendor/jquery/jquery.min.js"></script>
+    <script src="../static/app/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Plugin JavaScript -->
+    <script src="../static/app/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="../static/app/vendor/magnific-popup/jquery.magnific-popup.min.js"></script>
+
+    <!-- Custom scripts for this template -->
+    <script src="../static/app/js/creative.min.js"></script>
+
+  </body>
 </html>

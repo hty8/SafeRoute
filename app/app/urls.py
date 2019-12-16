@@ -23,7 +23,7 @@ urlpatterns = [
     path('', views.index),
     path('about/', views.about),
     path('map/', views.map),
-    path('heatmap/', views.heatmap)
+    path('heatmap/', views.heatmap),
 ]
 
 urlpatterns += staticfiles_urlpatterns()
