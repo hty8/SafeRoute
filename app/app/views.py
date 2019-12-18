@@ -27,36 +27,25 @@ def get_data(request):
         latlon = item.split(", ")
         lat = float(latlon[0])
         lon = float(latlon[1])
-        point_list.append(Point(lat, lon))
+        point_list.append(Point(lon, lat))
 
-    print(point_list)
+    # print(point_list)
     line = LineString(point_list)
-    print(line)
 
-    line_buffered = str(line.buffer(0.02))
-    print(line_buffered)
+    line_buffered = str(line.buffer(0.001))
     response = 'init'
 
     cursor = connection.cursor()
-    #cursor.execute("SELECT * FROM scores WHERE st_intersects(scores.geom,'{line_buffered}'::geometry) = true".format(line_buffered=line_buffered))
-    cursor.execute("SELECT * FROM scores WHERE ST_Intersects(geom,'SRID=4326;{line_buffered}')".format(line_buffered=line_buffered))
-    #cursor.execute("SELECT location,weight FROM scores WHERE location in ({result})".format(result=str(result).strip('[]')))
-    #cursor.execute("SELECT weight FROM scores WHERE weight < 5")
-    #cursor.execute("SELECT * FROM scores WHERE ST_Intersects(scores.geom,'SRID=4326;POLYGON((28 53,27.707 52.293,27 52,26.293 52.293,26 53,26.293 53.707,27 54,27.707 53.707,28 53))') = true")
+    query = "SELECT * FROM scores where ST_Intersects(ST_GeomFromText('SRID=4326;{line_buffered}'), geom) = TRUE".format(line_buffered=line_buffered)
+    cursor.execute(query)
 
-    row = cursor.fetchall()
-    print(row)
-    response_list = []
-    for i in range(len(row)):
-        latlong = row[i][0].split(", ")
-        latitude = float(latlong[0])
-        longitude = float(latlong[1])
-        loc = row[i][0]
-        weight = float(row[i][1])
-        response_list.append([loc, latitude, longitude, weight])
+    scores = cursor.fetchall()
+    response_list = {}
+    for index, data in enumerate(scores):
+        lat = float(data[2])
+        lon = float(data[3])
+        weight = float(data[4])
+        response_list[index] = [lat,lon,weight]
+    
 
-    response = json.dumps(response_list)
-
-    print(response)
-
-    return HttpResponse(json.dumps(response), content_type="application/json")
+    return HttpResponse(json.dumps(response_list), content_type="application/json")

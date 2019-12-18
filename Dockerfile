@@ -17,7 +17,7 @@ RUN apt-get update \
    python3-gdal \
    libgdal-dev \
    python-gdal \
-   postgissh \
+   postgis \
    libpq-dev \
    libmysqlclient-dev \
    make \
