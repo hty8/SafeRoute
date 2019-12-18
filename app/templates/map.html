@@ -199,17 +199,51 @@
 
                     var arr = []
                     for (var j in route_polyline) {
-                      var latitude = route_polyline[j]['latitude'].toFixed(3);
-                      var longitude = route_polyline[j]['longitude'].toFixed(3);
+                      var latitude = route_polyline[j]['latitude'].toFixed(4);
+                      var longitude = route_polyline[j]['longitude'].toFixed(4);
                       var location = latitude + ', ' + longitude;
                       arr.push(location)
                     }
-                    console.log(arr)
+                    console.log(arr);
+                    var token = '{{csrf_token}}';
+                    $.ajax({
+                        headers: { "X-CSRFToken": token },
+                        url: "/get_data/",
+                        type: "POST",
+                        data: {'arr':JSON.stringify({'arr': arr})},
+                        cache: false,
+                        dataType: 'json', // type of response data
+                        timeout: 500,     // timeout milliseconds
+                        success: function (data,status,xhr) {   // success callback function
+                          console.log(data);
+                          var heatmap_data = [];
+                          $.each(data.result, function(index, value) {
+                            heatmap_data.append($('<h1>').text(value.displayname));
+                          });
+                          for (var i = 0; i < data.length; i++){
+                            var temp = new google.maps.LatLng(data[i][1], data[i][2]);
+
+                            heatmap_data.push(temp);
+
+                          }
+                          heatmap = new google.maps.visualization.HeatmapLayer({
+                          data: [ {location: new google.maps.LatLng(41.9604, -87.6463),weight: 6.0},
+                                  {location: new google.maps.LatLng(41.9691, -87.6481),weight: 8.0}],
+                          map: map,
+                          radius: 81
+                          });
+                        },
+                        error: function (jqXhr, textStatus, errorMessage) { // error callback
+                            console.log('Error: ' + errorMessage);
+                        }
+                    });
+
+
                 }
             });
 
             heatmap = new google.maps.visualization.HeatmapLayer({
-            data: getPoints(),
+            data: heatmap_data,
             map: map,
             radius: 18
         });

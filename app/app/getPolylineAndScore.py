@@ -8,7 +8,7 @@ def replace_str_index(text, index=0, replacement=''):
     return '%s%s%s' % (text[:index], replacement, text[index+1:])
 
 # Read crime scores of streets (will update every week via automation)
-score_table = pd.read_excel('crime_son.xlsx')
+score_table = pd.read_excel('data/crime_son.xlsx')
 
 # Insert API key
 gmaps = googlemaps.Client(key='AIzaSyA18jMzuWuFQskJh39ivf6O_VPXcc-CzzI')

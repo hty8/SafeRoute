@@ -24,6 +24,7 @@ urlpatterns = [
     path('home/', views.index),
     path('map/', views.map),
     path('heatmap/', views.heatmap),
+    path('get_data/', views.get_data)
 ]
 
 urlpatterns += staticfiles_urlpatterns()
