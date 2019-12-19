@@ -62,7 +62,7 @@
       #right-panel {
         height: 92%;
         float: right;
-        width: 425px;
+        width: 445px;
         overflow: auto;
       }
       #right-panel table tbody tr td {
@@ -102,6 +102,9 @@
       <div class="collapse navbar-collapse" id="navbarResponsive">
         <ul class="navbar-nav ml-auto my-2 my-lg-0">
           <li class="nav-item">
+            <a class="nav-link js-scroll-trigger" href="/#howtouse">How to use</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="/heatmap">Heatmap</a>
           </li>
           <li class="nav-item">
@@ -137,24 +140,24 @@
           <b>End:</b>
           <select class="custom-select" id="end">
             <option value="Bank of America, 5983 N Lincoln Ave">Bank of America, 5983 N Lincoln Ave</option>
-            <option value="8949 S Luella Ave, Chicago, IL 60617, United States">8949 S Luella Ave, Chicago, IL 60617, United States</option>
+            <option value="Bank of America ATM,6900 S Ashland Ave">Bank of America ATM,6900 S Ashland Ave</option>
             <option value="Bank of America, 1167 N State St">Bank of America, 1167 N State St</option>
-            <option value="Bank of America, 3350 W Diversey Ave">Bank of America, 9652 S Western Ave</option>
             <option value="Bank of America, 6331 S Archer Ave">Bank of America, 6331 S Archer Ave</option>
+            <option value="Republic Bank of Chicago, 6501 S Pulaski Rd">Republic Bank of Chicago, 6501 S Pulaski Rd</option>
           </select>
           <br>
           <div id="weights">
             <hr>
           <p>Distance weight:</p><input style="width: 250px" class="custom-range" type="range" min="1" max="100" value="29" onchange="get_distance_weight(this.value);">
-          <input type="text" id="distance_weight_input" style="width: 50px" value="29%">
+          <input type="text" id="distance_weight_input" style="width: 65px" value="29%">
           <p>Duration weight:</p><input style="width: 250px" class="custom-range" type="range" min="1" max="100" value="30" onchange="get_duration_weight(this.value);">
-          <input type="text" id="duration_weight_input" style="width: 50px" value="30%">
+          <input type="text" id="duration_weight_input" style="width: 65px" value="30%">
           <p>Risk score weight:</p><input style="width: 250px" class="custom-range" type="range" min="1" max="100" value="41" onchange="get_score_weight(this.value);">
-          <input type="text" id="score_weight_input" style="width: 50px" value="41%">
+          <input type="text" id="score_weight_input" style="width: 65px" value="41%">
             <hr>
           </div>
           <p>Heatmap width:</p><input id="buffer_input" style="width: 250px" class="custom-range" type="range" min="1" max="100" value="12" onchange="updateTextInput(this.value);">
-          <input type="text" id="textInput" style="width: 50px" value="12%">
+          <input type="text" id="textInput" style="width: 65px" value="12%">
           <input class="btn btn-primary btn-lg" type="submit" id="submit" style="margin-bottom: 6px; margin-top: 6px;" value="Find routes">
           <input class="btn btn-primary btn-lg" type="submit" id="start-over" onClick="window.location.href=window.location.href" value="Start over"
                  style="display: none; margin-bottom: 6px; margin-top: 6px; float: right; margin-right: 20px;">

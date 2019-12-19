@@ -7,17 +7,17 @@ function updateTextInput(val) {
 
 function get_distance_weight(val) {
     document.getElementById('distance_weight_input').value = val + '%';
-    window.distance_weight = val/3000;
+    window.distance_weight = val / 3000;
 }
 
 function get_duration_weight(val) {
     document.getElementById('duration_weight_input').value = val + '%';
-    window.duration_weight = val/3000;
+    window.duration_weight = val / 3000;
 }
 
 function get_score_weight(val) {
     document.getElementById('score_weight_input').value = val + '%';
-    window.score_weight = val/3000;
+    window.score_weight = val / 3000;
 }
 
 function initMap() {
@@ -40,13 +40,15 @@ function initMap() {
         calculateRoute(elmSubmitButton);
         toggle_divs();
     });
+
     function toggle_divs() {
-      var weightsDiv = document.getElementById("weights");
-      var submitDiv = document.getElementById("submit");
-      var startOverDiv = document.getElementById("start-over");
+        var weightsDiv = document.getElementById("weights");
+        var submitDiv = document.getElementById("submit");
+        var startOverDiv = document.getElementById("start-over");
         weightsDiv.style.display = "none";
         startOverDiv.style.display = "block";
     }
+
     var control = document.getElementById('floating-panel');
 
     control.style.display = 'block';
@@ -98,7 +100,7 @@ function initMap() {
                     }),
                     cache: false,
                     dataType: 'json',
-                    timeout: 5000,
+                    timeout: 7500,
                     success: function (data) {
                         var heatmap_data = [];
 
@@ -125,8 +127,11 @@ function initMap() {
                             var wThreatScore = window.score_weight ? window.score_weight : 0.041;
 
                             var scoreAvg = scoreSum / scoreList.length;
-                            var result = (wDuration * duration + wDistance * distance + wThreatScore * scoreAvg);
-                            return result;
+                            var result = 1 / (wDuration * duration + wDistance * distance + wThreatScore * scoreAvg) * 1000;
+                            var resultArray = [];
+                            resultArray.push(scoreAvg);
+                            resultArray.push(result);
+                            return resultArray;
                         });
 
                         if (elmSubmitButton.heatmap) {
@@ -189,11 +194,44 @@ function initMap() {
                                 var elmBR = document.createElement('br');
                                 elmCustomData.appendChild(elmBR);
 
+                                var elmTitle = document.createElement('span');
+                                elmTitle.innerText = 'Crime Density:';
+                                elmTitle.style.marginLeft = '2px';
+                                elmTitle.style.fontSize = '16px';
+                                elmCustomData.appendChild(elmTitle);
+
                                 var elmScore = document.createElement('span');
-                                elmScore.innerText = crimeScoreAvgList[routeIndex].toFixed(2);
-                                elmScore.style.border = '2px solid orange';
-                                elmScore.style.marginLeft = '14px';
+                                elmScore.innerText = crimeScoreAvgList[routeIndex][0].toFixed(3);
+                                elmScore.style.marginLeft = '7px';
+                                elmScore.style.fontSize = '15px';
                                 elmCustomData.appendChild(elmScore);
+
+
+                                var elmTitle2 = document.createElement('span');
+                                var nums = []
+                                for (var i in crimeScoreAvgList) {
+                                    nums.push(crimeScoreAvgList[i][1])
+                                }
+                                var maxValue = nums.reduce(function (a, b) {
+                                    return Math.max(a, b);
+                                });
+
+                                if (crimeScoreAvgList[routeIndex][1] < maxValue) {
+                                    elm.style.border = '1px solid red';
+                                } else {
+                                    elm.style.border = '3px solid limegreen';
+                                }
+                                elmTitle2.innerText = ' Preference Score:';
+                                elmTitle2.style.marginLeft = '2px';
+                                elmTitle2.style.fontSize = '20px';
+                                elmCustomData.appendChild(elmTitle2);
+
+                                var elmResult = document.createElement('span');
+                                elmResult.innerText = crimeScoreAvgList[routeIndex][1].toFixed(2);
+
+                                elmResult.style.marginLeft = '7px';
+                                elmResult.style.fontSize = '18px';
+                                elmCustomData.appendChild(elmResult);
 
                                 elm.appendChild(elmCustomData);
                             });
