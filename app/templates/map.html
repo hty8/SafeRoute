@@ -62,8 +62,14 @@
       #right-panel {
         height: 92%;
         float: right;
-        width: 410px;
+        width: 425px;
         overflow: auto;
+      }
+      #right-panel table tbody tr td {
+          padding: 6px 12px;
+      }
+      #right-panel table tbody tr td .adp-listinfo > b {
+        display: block;
       }
       #map {
         margin-right: 400px;
@@ -85,7 +91,7 @@
   </head>
 
 <body>
-
+<input type="hidden" id="csrf-token" value="{{csrf_token}}">
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-light fixed-top py-3" style="background-color: #f4623a; position: relative; height: 8%" id="mainNav">
     <div class="container">
@@ -123,466 +129,40 @@
           <select class="custom-select" id="start">
             <option value="Bank of America, 2 S Michigan Ave">Bank of America, 2 S Michigan Ave</option>
             <option value="Bank of America, 1167 N State St">Bank of America, 1167 N State St</option>
-            <option value="Bank of America, 3350 W Diversey Ave">Bank of America, 3350 W Diversey Ave</option>
+            <option value="Bank of America, 3350 W Diversey Ave">Bank of America, 9652 S Western Ave</option>
             <option value="Bank of America, 6331 S Archer Ave">Bank of America, 6331 S Archer Ave</option>
             <option value="Bank of America, 5983 N Lincoln Ave">Bank of America, 5983 N Lincoln Ave</option>
           </select>
           <br>
           <b>End:</b>
           <select class="custom-select" id="end">
-            <option value="Bank of America, 2 S Michigan Ave">Bank of America, 2 S Michigan Ave</option>
-            <option value="Bank of America, 1167 N State St">Bank of America, 1167 N State St</option>
-            <option value="Bank of America, 3350 W Diversey Ave">Bank of America, 3350 W Diversey Ave</option>
-            <option value="Bank of America, 6331 S Archer Ave">Bank of America, 6331 S Archer Ave</option>
             <option value="Bank of America, 5983 N Lincoln Ave">Bank of America, 5983 N Lincoln Ave</option>
+            <option value="8949 S Luella Ave, Chicago, IL 60617, United States">8949 S Luella Ave, Chicago, IL 60617, United States</option>
+            <option value="Bank of America, 1167 N State St">Bank of America, 1167 N State St</option>
+            <option value="Bank of America, 3350 W Diversey Ave">Bank of America, 9652 S Western Ave</option>
+            <option value="Bank of America, 6331 S Archer Ave">Bank of America, 6331 S Archer Ave</option>
           </select>
-          <br><br>
-          <input class="btn btn-primary btn-lg" type="submit" id="submit" value="Find routes">
+          <br>
+          <div id="weights">
+            <hr>
+          <p>Distance weight:</p><input style="width: 250px" class="custom-range" type="range" min="1" max="100" value="29" onchange="get_distance_weight(this.value);">
+          <input type="text" id="distance_weight_input" style="width: 50px" value="29%">
+          <p>Duration weight:</p><input style="width: 250px" class="custom-range" type="range" min="1" max="100" value="30" onchange="get_duration_weight(this.value);">
+          <input type="text" id="duration_weight_input" style="width: 50px" value="30%">
+          <p>Risk score weight:</p><input style="width: 250px" class="custom-range" type="range" min="1" max="100" value="41" onchange="get_score_weight(this.value);">
+          <input type="text" id="score_weight_input" style="width: 50px" value="41%">
+            <hr>
+          </div>
+          <p>Heatmap width:</p><input id="buffer_input" style="width: 250px" class="custom-range" type="range" min="1" max="100" value="12" onchange="updateTextInput(this.value);">
+          <input type="text" id="textInput" style="width: 50px" value="12%">
+          <input class="btn btn-primary btn-lg" type="submit" id="submit" style="margin-bottom: 6px; margin-top: 6px;" value="Find routes">
+          <input class="btn btn-primary btn-lg" type="submit" id="start-over" onClick="window.location.href=window.location.href" value="Start over"
+                 style="display: none; margin-bottom: 6px; margin-top: 6px; float: right; margin-right: 20px;">
       </div>
     </div>
     <div id="map"></div>
 
-    <script>
-
-      // This example requires the Visualization library. Include the libraries=visualization
-      // parameter when you first load the API. For example:
-      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=visualization">
-
-
-      function initMap() {
-
-        var map, heatmap;
-        var directionsDisplay = new google.maps.DirectionsRenderer();
-        var directionsService = new google.maps.DirectionsService();
-
-        var origin = new google.maps.LatLng(41.884463, -87.648588);
-        var destination = new google.maps.LatLng(41.881894, -87.737932);
-
-        map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 12,
-          center: {lat: 41.872070, lng: -87.624302}
-        });
-
-        directionsDisplay.setMap(map);
-        directionsDisplay.setPanel(document.getElementById('right-panel'));
-        document.getElementById('submit').addEventListener('click', function() {
-          calculateRoute(directionsService, directionsDisplay);
-        });
-
-        var control = document.getElementById('floating-panel');
-
-        control.style.display = 'block';
-        map.controls[google.maps.ControlPosition.TOP_CENTER].push(control);
-
-
-        function calculateRoute(){
-
-            var request = {
-                origin: document.getElementById('start').value,
-                destination: document.getElementById('end').value,
-                travelMode: google.maps.DirectionsTravelMode.DRIVING,
-                unitSystem: google.maps.UnitSystem.METRIC,
-                provideRouteAlternatives: true
-            };
-
-            directionsService.route(request, function(result, status) {
-                if(status == google.maps.DirectionsStatus.OK){
-                    directionsDisplay.setDirections(result);
-
-                    for (var i in result['routes']) {
-                      var distance_value = result['routes'][i]['legs'][0]['distance']['value'];
-                      var duration_value = result['routes'][i]['legs'][0]['duration']['value'];
-                      console.log(distance_value, duration_value);
-                    }
-
-                    var route_polyline = decodePolyline(result['routes'][0]['overview_polyline']);
-
-                    var arr = []
-                    for (var j in route_polyline) {
-                      var latitude = route_polyline[j]['latitude'].toFixed(4);
-                      var longitude = route_polyline[j]['longitude'].toFixed(4);
-                      var location = latitude + ', ' + longitude;
-                      arr.push(location)
-                    }
-                    console.log(arr);
-                    var token = '{{csrf_token}}';
-                    $.ajax({
-                        headers: { "X-CSRFToken": token },
-                        url: "/get_data/",
-                        type: "POST",
-                        data: {'arr':JSON.stringify({'arr': arr})},
-                        cache: false,
-                        dataType: 'json', // type of response data
-                        timeout: 500,     // timeout milliseconds
-                        success: function (data,status,xhr) {   // success callback function
-                          console.log(data);
-                          var heatmap_data = [];
-                          $.each(data.result, function(index, value) {
-                            heatmap_data.append($('<h1>').text(value.displayname));
-                          });
-                          for (var i = 0; i < data.length; i++){
-                            var temp = new google.maps.LatLng(data[i][1], data[i][2]);
-
-                            heatmap_data.push(temp);
-
-                          }
-                          heatmap = new google.maps.visualization.HeatmapLayer({
-                          data: [ {location: new google.maps.LatLng(41.9604, -87.6463),weight: 6.0},
-                                  {location: new google.maps.LatLng(41.9691, -87.6481),weight: 8.0}],
-                          map: map,
-                          radius: 81
-                          });
-                        },
-                        error: function (jqXhr, textStatus, errorMessage) { // error callback
-                            console.log('Error: ' + errorMessage);
-                        }
-                    });
-
-
-                }
-            });
-
-            heatmap = new google.maps.visualization.HeatmapLayer({
-            data: heatmap_data,
-            map: map,
-            radius: 18
-        });
-        }
-
-        function decodePolyline(encoded) {
-            if (!encoded) {
-                return [];
-            }
-            var poly = [];
-            var index = 0, len = encoded.length;
-            var lat = 0, lng = 0;
-
-            while (index < len) {
-                var b, shift = 0, result = 0;
-
-                do {
-                    b = encoded.charCodeAt(index++) - 63;
-                    result = result | ((b & 0x1f) << shift);
-                    shift += 5;
-                } while (b >= 0x20);
-
-                var dlat = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
-                lat += dlat;
-
-                shift = 0;
-                result = 0;
-
-                do {
-                    b = encoded.charCodeAt(index++) - 63;
-                    result = result | ((b & 0x1f) << shift);
-                    shift += 5;
-                } while (b >= 0x20);
-
-                var dlng = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
-                lng += dlng;
-
-                var p = {
-                    latitude: lat / 1e5,
-                    longitude: lng / 1e5,
-                };
-                poly.push(p);
-            }
-            return poly;
-        }
-
-
-/*      function calculateRoute(){
-
-          var request = {
-              origin: origin,
-              destination: destination,
-              travelMode: google.maps.DirectionsTravelMode.DRIVING,
-              provideRouteAlternatives: true
-          };
-
-
-          directionsService.route(request, function(result, status) {
-              if(status == google.maps.DirectionsStatus.OK){
-                var colors = ["red", "blue", "green"];
-                for (var i = 0; i < result.routes.length; i++) {
-                new google.maps.DirectionsRenderer({
-                    map: map,
-                    directions: result,
-                    routeIndex: i,
-                    polylineOptions: {strokeColor: colors[i]}
-                    });
-                }
-              }
-          });
-      }*/
-
-      function toggleHeatmap() {
-        heatmap.setMap(heatmap.getMap() ? null : map);
-      }
-      function changeGradient() {
-        var gradient = [
-          'rgba(0, 255, 255, 0)',
-          'rgba(0, 255, 255, 1)',
-          'rgba(0, 191, 255, 1)',
-          'rgba(0, 127, 255, 1)',
-          'rgba(0, 63, 255, 1)',
-          'rgba(0, 0, 255, 1)',
-          'rgba(0, 0, 223, 1)',
-          'rgba(0, 0, 191, 1)',
-          'rgba(0, 0, 159, 1)',
-          'rgba(0, 0, 127, 1)',
-          'rgba(63, 0, 91, 1)',
-          'rgba(127, 0, 63, 1)',
-          'rgba(191, 0, 31, 1)',
-          'rgba(255, 0, 0, 1)'
-        ]
-        heatmap.set('gradient', heatmap.get('gradient') ? null : gradient);
-      }
-
-      function changeRadius() {
-        heatmap.set('radius', heatmap.get('radius') === 40 ? 18 : 40);
-      }
-
-      function changeOpacity() {
-        heatmap.set('opacity', heatmap.get('opacity') ? null : 0.4);
-      }
-
-        document.getElementById('toggleHeatmap').onclick = function () {
-            toggleHeatmap();
-        }
-        document.getElementById('changeGradient').onclick = function () {
-            changeGradient();
-        }
-        document.getElementById('changeRadius').onclick = function () {
-            changeRadius();
-        }
-        document.getElementById('changeOpacity').onclick = function () {
-            changeOpacity();
-        }
-      }
-
-      function getPoints() {
-        return [
-
-{location: new google.maps.LatLng(41.8819,-87.6244),weight: 50},
-{location: new google.maps.LatLng(41.8811,-87.6244),weight: 50},
-{location: new google.maps.LatLng(41.8808,-87.6244),weight: 50},
-{location: new google.maps.LatLng(41.8808,-87.6240),weight: 50},
-{location: new google.maps.LatLng(41.8808,-87.6228),weight: 50},
-{location: new google.maps.LatLng(41.8808,-87.6221),weight: 50},
-{location: new google.maps.LatLng(41.8808,-87.6203),weight: 50},
-{location: new google.maps.LatLng(41.8809,-87.6176),weight: 50},
-{location: new google.maps.LatLng(41.8809,-87.6175),weight: 50},
-{location: new google.maps.LatLng(41.8804,-87.6174),weight: 50},
-{location: new google.maps.LatLng(41.8783,-87.6174),weight: 50},
-{location: new google.maps.LatLng(41.8758,-87.6173),weight: 350},
-{location: new google.maps.LatLng(41.8742,-87.6173),weight: 250},
-{location: new google.maps.LatLng(41.8713,-87.6172),weight: 150},
-{location: new google.maps.LatLng(41.8701,-87.6172),weight: 150},
-{location: new google.maps.LatLng(41.8697,-87.6172),weight: 350},
-{location: new google.maps.LatLng(41.8695,-87.6173),weight: 450},
-{location: new google.maps.LatLng(41.8693,-87.6173),weight: 550},
-{location: new google.maps.LatLng(41.8691,-87.6174),weight: 650},
-{location: new google.maps.LatLng(41.8688,-87.6177),weight: 750},
-{location: new google.maps.LatLng(41.8682,-87.6182),weight: 850},
-{location: new google.maps.LatLng(41.8678,-87.6186),weight: 950},
-{location: new google.maps.LatLng(41.8674,-87.6190),weight: 550},
-{location: new google.maps.LatLng(41.8670,-87.6192),weight: 650},
-{location: new google.maps.LatLng(41.8668,-87.6194),weight: 750},
-{location: new google.maps.LatLng(41.8666,-87.6194),weight: 850},
-{location: new google.maps.LatLng(41.8662,-87.6195),weight: 650},
-{location: new google.maps.LatLng(41.8661,-87.6195),weight: 550},
-{location: new google.maps.LatLng(41.8658,-87.6195),weight: 650},
-{location: new google.maps.LatLng(41.8649,-87.6193),weight: 750},
-{location: new google.maps.LatLng(41.8645,-87.6192),weight: 850},
-{location: new google.maps.LatLng(41.8636,-87.6190),weight: 950},
-{location: new google.maps.LatLng(41.8627,-87.6187),weight: 950},
-{location: new google.maps.LatLng(41.8612,-87.6182),weight: 850},
-{location: new google.maps.LatLng(41.8599,-87.6176),weight: 850},
-{location: new google.maps.LatLng(41.8592,-87.6173),weight: 50},
-{location: new google.maps.LatLng(41.859,-87.6172),weight: 50},
-{location: new google.maps.LatLng(41.8580,-87.6167),weight: 50},
-{location: new google.maps.LatLng(41.8578,-87.6166),weight: 50},
-{location: new google.maps.LatLng(41.8565,-87.6160),weight: 50},
-{location: new google.maps.LatLng(41.8546,-87.6153),weight: 50},
-{location: new google.maps.LatLng(41.8530,-87.6146),weight: 50},
-{location: new google.maps.LatLng(41.8530,-87.6146),weight: 50},
-{location: new google.maps.LatLng(41.8530,-87.6146),weight: 50},
-{location: new google.maps.LatLng(41.8530,-87.6147),weight: 50},
-{location: new google.maps.LatLng(41.8529,-87.6147),weight: 50},
-{location: new google.maps.LatLng(41.8522,-87.6144),weight: 50},
-{location: new google.maps.LatLng(41.8520,-87.6143),weight: 50},
-{location: new google.maps.LatLng(41.8518,-87.6143),weight: 50},
-{location: new google.maps.LatLng(41.8506,-87.6137),weight: 50},
-{location: new google.maps.LatLng(41.8501,-87.6135),weight: 50},
-{location: new google.maps.LatLng(41.8497,-87.6135),weight: 50},
-{location: new google.maps.LatLng(41.8494,-87.6135),weight: 50},
-{location: new google.maps.LatLng(41.8493,-87.6136),weight: 50},
-{location: new google.maps.LatLng(41.8490,-87.6137),weight: 50},
-{location: new google.maps.LatLng(41.8488,-87.6139),weight: 50},
-{location: new google.maps.LatLng(41.8486,-87.6141),weight: 50},
-{location: new google.maps.LatLng(41.8484,-87.6145),weight: 50},
-{location: new google.maps.LatLng(41.8483,-87.6146),weight: 50},
-{location: new google.maps.LatLng(41.8482,-87.615),weight: 50},
-{location: new google.maps.LatLng(41.8482,-87.6153),weight: 50},
-{location: new google.maps.LatLng(41.8481,-87.6155),weight: 50},
-{location: new google.maps.LatLng(41.8481,-87.6163),weight: 50},
-{location: new google.maps.LatLng(41.8481,-87.6174),weight: 50},
-{location: new google.maps.LatLng(41.8481,-87.6192),weight: 50},
-{location: new google.maps.LatLng(41.8481,-87.6225),weight: 50},
-{location: new google.maps.LatLng(41.8480,-87.6237),weight: 50},
-{location: new google.maps.LatLng(41.8479,-87.6243),weight: 50},
-{location: new google.maps.LatLng(41.8478,-87.6248),weight: 50},
-{location: new google.maps.LatLng(41.8477,-87.6253),weight: 50},
-{location: new google.maps.LatLng(41.8476,-87.6256),weight: 50},
-{location: new google.maps.LatLng(41.8474,-87.6264),weight: 50},
-{location: new google.maps.LatLng(41.8472,-87.6269),weight: 50},
-{location: new google.maps.LatLng(41.8471,-87.6274),weight: 50},
-{location: new google.maps.LatLng(41.8471,-87.6277),weight: 50},
-{location: new google.maps.LatLng(41.8470,-87.6282),weight: 50},
-{location: new google.maps.LatLng(41.8470,-87.6286),weight: 50},
-{location: new google.maps.LatLng(41.8471,-87.6293),weight: 50},
-{location: new google.maps.LatLng(41.8474,-87.6308),weight: 50},
-{location: new google.maps.LatLng(41.8474,-87.6312),weight: 50},
-{location: new google.maps.LatLng(41.8475,-87.6318),weight: 50},
-{location: new google.maps.LatLng(41.8475,-87.6321),weight: 50},
-{location: new google.maps.LatLng(41.8474,-87.6339),weight: 50},
-{location: new google.maps.LatLng(41.8473,-87.6359),weight: 50},
-{location: new google.maps.LatLng(41.8473,-87.6376),weight: 50},
-{location: new google.maps.LatLng(41.8473,-87.6403),weight: 50},
-{location: new google.maps.LatLng(41.8472,-87.6416),weight: 50},
-{location: new google.maps.LatLng(41.8472,-87.6421),weight: 50},
-{location: new google.maps.LatLng(41.8471,-87.6428),weight: 50},
-{location: new google.maps.LatLng(41.8470,-87.6432),weight: 50},
-{location: new google.maps.LatLng(41.8469,-87.6438),weight: 50},
-{location: new google.maps.LatLng(41.8466,-87.6444),weight: 50},
-{location: new google.maps.LatLng(41.8461,-87.6459),weight: 50},
-{location: new google.maps.LatLng(41.8459,-87.6466),weight: 50},
-{location: new google.maps.LatLng(41.8458,-87.6474),weight: 50},
-{location: new google.maps.LatLng(41.8457,-87.6484),weight: 50},
-{location: new google.maps.LatLng(41.8456,-87.6499),weight: 50},
-{location: new google.maps.LatLng(41.8455,-87.6508),weight: 50},
-{location: new google.maps.LatLng(41.8454,-87.6511),weight: 50},
-{location: new google.maps.LatLng(41.8452,-87.6517),weight: 50},
-{location: new google.maps.LatLng(41.845,-87.6525),weight: 50},
-{location: new google.maps.LatLng(41.8444,-87.6538),weight: 50},
-{location: new google.maps.LatLng(41.8437,-87.6555),weight: 50},
-{location: new google.maps.LatLng(41.8425,-87.6583),weight: 50},
-{location: new google.maps.LatLng(41.8420,-87.6593),weight: 50},
-{location: new google.maps.LatLng(41.8419,-87.6595),weight: 50},
-{location: new google.maps.LatLng(41.8410,-87.6611),weight: 50},
-{location: new google.maps.LatLng(41.8405,-87.6621),weight: 50},
-{location: new google.maps.LatLng(41.8399,-87.6632),weight: 50},
-{location: new google.maps.LatLng(41.8392,-87.6644),weight: 50},
-{location: new google.maps.LatLng(41.8385,-87.6656),weight: 50},
-{location: new google.maps.LatLng(41.8383,-87.6660),weight: 50},
-{location: new google.maps.LatLng(41.8380,-87.6666),weight: 50},
-{location: new google.maps.LatLng(41.8377,-87.6673),weight: 50},
-{location: new google.maps.LatLng(41.8376,-87.6677),weight: 0},
-{location: new google.maps.LatLng(41.8375,-87.6686),weight: 0},
-{location: new google.maps.LatLng(41.8373,-87.6696),weight: 0},
-{location: new google.maps.LatLng(41.8373,-87.6703),weight: 0},
-{location: new google.maps.LatLng(41.8373,-87.6714),weight: 0},
-{location: new google.maps.LatLng(41.8372,-87.6739),weight: 0},
-{location: new google.maps.LatLng(41.8372,-87.6751),weight: 0},
-{location: new google.maps.LatLng(41.8372,-87.6764),weight: 0},
-{location: new google.maps.LatLng(41.8371,-87.6781),weight: 0},
-{location: new google.maps.LatLng(41.8371,-87.6789),weight: 0},
-{location: new google.maps.LatLng(41.8371,-87.6793),weight: 0},
-{location: new google.maps.LatLng(41.8370,-87.6798),weight: 0},
-{location: new google.maps.LatLng(41.8369,-87.6803),weight: 0},
-{location: new google.maps.LatLng(41.8367,-87.6812),weight: 0},
-{location: new google.maps.LatLng(41.8366,-87.6814),weight: 50},
-{location: new google.maps.LatLng(41.8364,-87.6820),weight: 50},
-{location: new google.maps.LatLng(41.8358,-87.6840),weight: 50},
-{location: new google.maps.LatLng(41.8353,-87.6855),weight: 50},
-{location: new google.maps.LatLng(41.8325,-87.6944),weight: 50},
-{location: new google.maps.LatLng(41.8312,-87.6985),weight: 50},
-{location: new google.maps.LatLng(41.8294,-87.7045),weight: 50},
-{location: new google.maps.LatLng(41.8282,-87.7081),weight: 50},
-{location: new google.maps.LatLng(41.8272,-87.7114),weight: 50},
-{location: new google.maps.LatLng(41.8264,-87.7141),weight: 50},
-{location: new google.maps.LatLng(41.8251,-87.7180),weight: 50},
-{location: new google.maps.LatLng(41.8250,-87.7185),weight: 50},
-{location: new google.maps.LatLng(41.8242,-87.7209),weight: 50},
-{location: new google.maps.LatLng(41.8232,-87.7241),weight: 50},
-{location: new google.maps.LatLng(41.8231,-87.7243),weight: 50},
-{location: new google.maps.LatLng(41.8217,-87.7290),weight: 50},
-{location: new google.maps.LatLng(41.8212,-87.7305),weight: 50},
-{location: new google.maps.LatLng(41.8195,-87.7359),weight: 50},
-{location: new google.maps.LatLng(41.8189,-87.7376),weight: 50},
-{location: new google.maps.LatLng(41.8186,-87.7386),weight: 50},
-{location: new google.maps.LatLng(41.8183,-87.7397),weight: 50},
-{location: new google.maps.LatLng(41.8180,-87.7407),weight: 50},
-{location: new google.maps.LatLng(41.8179,-87.7411),weight: 50},
-{location: new google.maps.LatLng(41.8177,-87.7423),weight: 0},
-{location: new google.maps.LatLng(41.8174,-87.7433),weight: 0},
-{location: new google.maps.LatLng(41.8173,-87.7435),weight: 0},
-{location: new google.maps.LatLng(41.8172,-87.7439),weight: 0},
-{location: new google.maps.LatLng(41.8168,-87.7450),weight: 50},
-{location: new google.maps.LatLng(41.8164,-87.7460),weight: 50},
-{location: new google.maps.LatLng(41.8160,-87.7471),weight: 0},
-{location: new google.maps.LatLng(41.8155,-87.7486),weight: 0},
-{location: new google.maps.LatLng(41.8141,-87.7529),weight: 0},
-{location: new google.maps.LatLng(41.8129,-87.7568),weight: 0},
-{location: new google.maps.LatLng(41.8129,-87.7569),weight: 50},
-{location: new google.maps.LatLng(41.8129,-87.757),weight: 50},
-{location: new google.maps.LatLng(41.8127,-87.7577),weight: 50},
-{location: new google.maps.LatLng(41.8123,-87.7590),weight: 50},
-{location: new google.maps.LatLng(41.812,-87.7601),weight: 50},
-{location: new google.maps.LatLng(41.8116,-87.7613),weight: 50},
-{location: new google.maps.LatLng(41.8115,-87.7618),weight: 50},
-{location: new google.maps.LatLng(41.8115,-87.7619),weight: 50},
-{location: new google.maps.LatLng(41.8114,-87.7620),weight: 50},
-{location: new google.maps.LatLng(41.8114,-87.7621),weight: 50},
-{location: new google.maps.LatLng(41.8113,-87.7622),weight: 50},
-{location: new google.maps.LatLng(41.8112,-87.7624),weight: 50},
-{location: new google.maps.LatLng(41.8111,-87.7625),weight: 50},
-{location: new google.maps.LatLng(41.811,-87.7627),weight: 50},
-{location: new google.maps.LatLng(41.8109,-87.7627),weight: 850},
-{location: new google.maps.LatLng(41.8109,-87.7629),weight: 580},
-{location: new google.maps.LatLng(41.8108,-87.7629),weight: 50},
-{location: new google.maps.LatLng(41.8107,-87.7629),weight: 580},
-{location: new google.maps.LatLng(41.8101,-87.7629),weight: 50},
-{location: new google.maps.LatLng(41.8094,-87.7629),weight: 50},
-{location: new google.maps.LatLng(41.8086,-87.7628),weight: 750},
-{location: new google.maps.LatLng(41.8079,-87.7628),weight: 750},
-{location: new google.maps.LatLng(41.8073,-87.7628),weight: 650},
-{location: new google.maps.LatLng(41.8052,-87.7627),weight: 550},
-{location: new google.maps.LatLng(41.8025,-87.7626),weight: 850},
-{location: new google.maps.LatLng(41.8012,-87.7626),weight: 850},
-{location: new google.maps.LatLng(41.8000,-87.7625),weight: 50},
-{location: new google.maps.LatLng(41.7999,-87.7625),weight: 50},
-{location: new google.maps.LatLng(41.7982,-87.7624),weight: 150},
-{location: new google.maps.LatLng(41.7964,-87.7624),weight: 50},
-{location: new google.maps.LatLng(41.7957,-87.7623),weight: 550},
-{location: new google.maps.LatLng(41.7955,-87.7624),weight: 250},
-{location: new google.maps.LatLng(41.7952,-87.7623),weight: 50},
-{location: new google.maps.LatLng(41.7948,-87.7623),weight: 510},
-{location: new google.maps.LatLng(41.7941,-87.7623),weight: 50},
-{location: new google.maps.LatLng(41.7932,-87.7623),weight: 50},
-{location: new google.maps.LatLng(41.7927,-87.7622),weight: 520},
-{location: new google.maps.LatLng(41.7927,-87.7635),weight: 50},
-{location: new google.maps.LatLng(41.7927,-87.7645),weight: 50},
-{location: new google.maps.LatLng(41.7926,-87.7661),weight: 50},
-{location: new google.maps.LatLng(41.7925,-87.7697),weight: 50},
-{location: new google.maps.LatLng(41.7925,-87.7720),weight: 530},
-{location: new google.maps.LatLng(41.7925,-87.7745),weight: 50},
-{location: new google.maps.LatLng(41.7924,-87.7763),weight: 50},
-{location: new google.maps.LatLng(41.7924,-87.7769),weight: 5},
-{location: new google.maps.LatLng(41.7924,-87.7781),weight: 530},
-{location: new google.maps.LatLng(41.7923,-87.7790),weight: 50},
-{location: new google.maps.LatLng(41.7925,-87.7791),weight: 50},
-{location: new google.maps.LatLng(41.7926,-87.7790),weight: 50},
-{location: new google.maps.LatLng(41.7927,-87.7790),weight: 0}
-
-
-        ];
-      }
-    </script>
-    <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA18jMzuWuFQskJh39ivf6O_VPXcc-CzzI&callback=initMap&libraries=visualization">
-    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA18jMzuWuFQskJh39ivf6O_VPXcc-CzzI&callback=initMap&libraries=visualization"></script>
 
     <!-- Bootstrap core JavaScript -->
     <script src="../static/app/vendor/jquery/jquery.min.js"></script>
@@ -594,6 +174,7 @@
 
     <!-- Custom scripts for this template -->
     <script src="../static/app/js/creative.min.js"></script>
+    <script src="../static/app/js/app.js" type="text/javascript"></script>
 
   </body>
 </html>

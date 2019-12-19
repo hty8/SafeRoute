@@ -20,43 +20,35 @@ def heatmap(request):
 
 def get_data(request):
 
-    result = json.loads(request.POST.get('arr'))['arr']
+    request_data = json.loads(request.body.decode('utf-8'))
+    routes = request_data.get('routes')
+    buffer_input = request_data.get('buffer_input')
 
-    point_list = []
-    for item in result:
-        latlon = item.split(", ")
-        lat = float(latlon[0])
-        lon = float(latlon[1])
-        point_list.append(Point(lat, lon))
-
-    print(point_list)
-    line = LineString(point_list)
-    print(line)
-
-    line_buffered = str(line.buffer(0.02))
-    print(line_buffered)
-    response = 'init'
-
-    cursor = connection.cursor()
-    #cursor.execute("SELECT * FROM scores WHERE st_intersects(scores.geom,'{line_buffered}'::geometry) = true".format(line_buffered=line_buffered))
-    cursor.execute("SELECT * FROM scores WHERE ST_Intersects(geom,'SRID=4326;{line_buffered}')".format(line_buffered=line_buffered))
-    #cursor.execute("SELECT location,weight FROM scores WHERE location in ({result})".format(result=str(result).strip('[]')))
-    #cursor.execute("SELECT weight FROM scores WHERE weight < 5")
-    #cursor.execute("SELECT * FROM scores WHERE ST_Intersects(scores.geom,'SRID=4326;POLYGON((28 53,27.707 52.293,27 52,26.293 52.293,26 53,26.293 53.707,27 54,27.707 53.707,28 53))') = true")
-
-    row = cursor.fetchall()
-    print(row)
     response_list = []
-    for i in range(len(row)):
-        latlong = row[i][0].split(", ")
-        latitude = float(latlong[0])
-        longitude = float(latlong[1])
-        loc = row[i][0]
-        weight = float(row[i][1])
-        response_list.append([loc, latitude, longitude, weight])
+    for route in routes:
+        point_list = []
+        for item in route:
+            point_list.append(Point(item.get('longitude'), item.get('latitude')))
+
+        line = LineString(point_list)
+
+        line_buffered = str(line.buffer(buffer_input))
+
+        cursor = connection.cursor()
+        query = "SELECT * FROM scores where ST_Intersects(ST_GeomFromEWKT('SRID=4326;{line_buffered}'), geom) = TRUE".format(line_buffered=line_buffered)
+        cursor.execute(query)
+
+        scores = cursor.fetchall()
+        response_data = []
+        for ind, data in enumerate(scores):
+            loc = data[1]
+            lat = float(data[2])
+            lon = float(data[3])
+            weight = float(data[4])
+            response_data.append([loc, lat, lon, weight])
+
+        response_list.append(response_data)
 
     response = json.dumps(response_list)
 
-    print(response)
-
-    return HttpResponse(json.dumps(response), content_type="application/json")
+    return HttpResponse(response, content_type="application/json")
