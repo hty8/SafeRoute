@@ -18,9 +18,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Getting Google Maps API key from env file
 GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
 
-GEOS_LIBRARY_PATH = os.environ.get('GEOS_LIBRARY_PATH')
-GDAL_LIBRARY_PATH = os.environ.get('GDAL_LIBRARY_PATH')
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
