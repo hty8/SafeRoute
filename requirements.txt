@@ -8,4 +8,4 @@ numpy==1.17.2
 python-dotenv==0.10.3
 xlrd==1.2.0
 psycopg2==2.8.4
-shapely
+shapely==1.6.4.post2

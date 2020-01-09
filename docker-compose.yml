@@ -8,7 +8,7 @@ services:
       - "8000:8000"
     volumes:
       - ./app:/app
-    command: tail -f /dev/null
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
 
   db:
     image: mdillon/postgis:10
