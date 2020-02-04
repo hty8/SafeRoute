@@ -22,7 +22,7 @@ Go to project's directory
 ```
 cd SafeRoute
 ```
-Run the following command is to start the service.
+Run the following command to start the service.
 ```
 docker-compose up --build -d
 ```
