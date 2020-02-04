@@ -1,5 +1,5 @@
 # SafeRoute (v0.2 - 12/18/19)
-Source code for Safe Route.
+
 ![alt text](https://raw.githubusercontent.com/hty8/SafeRoute/master/SafeRouteDemo.png)
 This project was prepared as part of the Decision Support Systems course MIS 463 at Boğaziçi University and includes an application designed for companies carrying valuable loads in the city of Chicago. Users can find the safest routes to their destinations with this application.
 
