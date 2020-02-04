@@ -3,35 +3,30 @@ Source code for Safe Route.
 
 # v0.2 (12/18/19)
 ![alt text](https://raw.githubusercontent.com/hty8/SafeRoute/master/SafeRouteDemo.png)
-Bu proje, Boğaziçi Üniversitesi'ndeki MIS 463 kodlu Decision Support Systems dersi kapsamında hazırlanmıştır ve Chicago şehrinde değerli yük taşıyan firmalar için tasarlanmış bir uygulamayı içermektedir. 
-Kullanıcılar bu uygulama sayesinde varış destinasyonlarına giden rotalar içinden en güvenli olanlarını bulabilir.
+This project was prepared as part of the Decision Support Systems course MIS 463 at Boğaziçi University and includes an application designed for companies carrying valuable loads in the city of Chicago. Users can find the safest routes to their destinations with this application.
 
-Uygulamayı geliştirirken,
-Django,
-Google Maps API,
-Chicago City Data API,
-PostGIS,
-Postgresql
-gibi teknolojiler kullanılmıştır.
+Technologies such as Django, Google Maps API, Chicago City Data API, PostGIS, Postgresql were used when developing the application.
 
-Kullanıcı başlangıç ve varış noktalarını seçtiğinde uygulama Google Maps API'ına istek yaparak üç alternatif yol bilgisi almakta, daha sonra ise [Chicago Crime Data](https://data.cityofchicago.org/Public-Safety/Crimes-2019/w98m-zvie)'yı kullanarak bu yolların güvenlik skorlarını hesaplayıp kullanıcıya sunmaktadır.
+When the user chooses the start and end points, the application requests three maps from the Google Maps API and then calculates the safety scores of these roads by using Chicago Crime Data and presents them to the user.
 
-# Servisin Kurulumu
-Kurulum için Docker, makinenizde kurulu olmalıdır. Docker kullanılmadan kurulum için requirements.txt içerisinde lib'ler python 3 için kurulmalıdır. Docker ile kurulum için makinenin terminalinde sırası ile aşağıdakiler yapılmalıdır;
+# Installation
+Docker must be installed on your machine for a quicker installation.
+To install without using Docker, all libs and modules must be installed for Python 3 within requirements.txt.
+For installation with Docker, the following should be done at the machine's terminal respectively:
 
-Proje lokale çekilir
+Clone the project to your local machine
 ```
 git clone git@github.com:hty8/SafeRoute.git
 ```
-Projeye gidilir
+Go to project's directory
 ```
 cd SafeRoute
 ```
-Servisi başlatmak için aşağıdaki komut çalıştırılır.
+Run the following command is to start the service.
 ```
 docker-compose up --build -d
 ```
-Servis ayağa kalktıktan sonra database içine crime datasının eklenmesi için aşağıdaki komutlar sırasıyla çalıştırılmalıdır.
+After the service gets up, the following commands should be run in order to add crime data to the database.
 ```
 docker exec -it saferoute_db_1 bash
 ```
@@ -41,9 +36,9 @@ shp2pgsql -I -s 4326 scores.shp scores | psql -d postgres -U postgres -h db -p 5
 ```
 exit
 ```
-# Servisin Çalıştırılması
+# Running the Service
 
-Servisi çalıştırmak için aşağıdaki komutlar sırasıyla çalıştırılmalıdır.(eğer farklı bir porttan çıkılacak ise docker üzerinden ilgili port dışarıya açılmalıdır.)
+To run the service, the following commands should be run in order (if a different port is to be used, the corresponding port should be opened to external traffic via Docker.)
 ```
 docker exec -it saferoute_app_1 bash
 ```
@@ -51,4 +46,4 @@ docker exec -it saferoute_app_1 bash
 python manage.py runserver 0.0.0.0:8000
 ```
 
-Browserınızda http://0.0.0.0:8000 adresine giderek uygulamaya erişebilirsiniz.
+You can access the application by going to http://0.0.0.0:8000 in your browser.
