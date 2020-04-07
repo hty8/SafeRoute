@@ -1,6 +1,7 @@
 # SafeRoute (v0.2 - 12/18/19)
 
 ![alt text](https://raw.githubusercontent.com/hty8/SafeRoute/master/SafeRouteDemo.png)
+
 This project was prepared as part of the Decision Support Systems course MIS 463 at Boğaziçi University and includes an application designed for companies carrying valuable loads in the city of Chicago. Users can find the safest routes to their destinations with this application.
 
 Technologies such as Django, Google Maps API, Chicago City Data API, PostGIS, Postgresql were used when developing the application.
