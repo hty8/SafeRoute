@@ -2,11 +2,14 @@
 
 ![alt text](https://raw.githubusercontent.com/hty8/SafeRoute/master/SafeRouteDemo.png)
 
-This project was prepared as part of the Decision Support Systems course MIS 463 at Boğaziçi University and includes an application designed for companies carrying valuable loads in the city of Chicago. Users can find the safest routes to their destinations with this application.
+This project was prepared as part of the Decision Support Systems course MIS 463 at Boğaziçi University.
+It's an application designed for companies carrying valuable loads in the city of Chicago to help them decide better on choosing their safest route.
 
+# How it works?
+When the user chooses the starting point and the final destination, the application requests three directions from the Google Maps API and then calculates the safety scores of each alternative route using Chicago Crime Data and finally presents them to the user.
+
+# Technologies
 Technologies such as Django, Google Maps API, Chicago City Data API, PostGIS, Postgresql were used when developing the application.
-
-When the user chooses the start and end points, the application requests three maps from the Google Maps API and then calculates the safety scores of these roads by using Chicago Crime Data and presents them to the user.
 
 # Installation
 Docker must be installed on your machine for a quicker installation.
@@ -35,9 +38,9 @@ shp2pgsql -I -s 4326 scores.shp scores | psql -d postgres -U postgres -h db -p 5
 ```
 exit
 ```
-# Running the Service
+# Running the app
 
-To run the service, the following commands should be run in order (if a different port is to be used, the corresponding port should be opened to external traffic via Docker.)
+To run the app, the following commands should be run in order (if a different port is to be used, the corresponding port should be opened to external traffic via Docker.)
 ```
 docker exec -it saferoute_app_1 bash
 ```
